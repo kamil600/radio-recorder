@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Radio Recorder – Panel WWW</title>
+</head>
+<body>
+    <h1>Radio Recorder – Nagrania</h1>
+
+    <h2>Lista nagrań</h2>
+    <ul>
+        {% for f in files %}
+            <li><a href="/download/{{ f }}">{{ f }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>Logi</h2>
+    <a href="/logs">Zobacz logi</a>
+</body>
+</html>
