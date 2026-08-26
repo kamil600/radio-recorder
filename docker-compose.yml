@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  worker:
+    build: ./worker
+    container_name: radio_recorder_worker
+    restart: always
+    env_file: ./worker/.env
+    volumes:
+      - recordings:/app/recordings
+      - logs:/app
+
+  web:
+    build: ./web
+    container_name: radio_recorder_web
+    restart: always
+    volumes:
+      - recordings:/app/recordings
+      - logs:/app
+
+  nginx:
+    build: ./nginx
+    container_name: radio_recorder_nginx
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+volumes:
+  recordings:
+  logs:
