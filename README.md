@@ -19,5 +19,14 @@ python app.py
    - KEEP_DAYS
    - MAX_RETRIES
 6. Deploy.
+7. Render automatycznie wykryje `render.yaml`
+8. Utworzy dwa serwisy:
+   - radio-recorder-worker
+   - radio-recorder-web
+
+Panel WWW:
+- pokazuje nagrania
+- pozwala pobierać pliki
+- pokazuje logi
 
 Nagrania w `OUTPUT_DIR`, logi w `radio.log`, stare pliki usuwane po `KEEP_DAYS`.
