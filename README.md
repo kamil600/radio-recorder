@@ -42,7 +42,7 @@ sudo systemctl start docker
 
 ### 3. Wgraj projekt
 
-git clone https://github.com/USER/radio-recorder.git  
+git clone https://github.com/kamil600/radio-recorder.git  
 cd radio-recorder  
 
 ### 4. Uruchom kontenery
