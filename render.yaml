@@ -1,0 +1,14 @@
+services:
+  - type: worker
+    name: radio-recorder-worker
+    env: python
+    buildCommand: "pip install -r worker/requirements.txt"
+    startCommand: "python worker/app.py"
+    autoDeploy: true
+
+  - type: web
+    name: radio-recorder-web
+    env: python
+    buildCommand: "pip install -r web/requirements.txt"
+    startCommand: "python web/server.py"
+    autoDeploy: true
