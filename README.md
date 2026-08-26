@@ -1,128 +1,132 @@
-# 📘 Radio Recorder (Docker + Oracle Cloud VPS)
+# Radio Recorder – Wdrożenie na Serv00.com
 
-Radio Recorder to aplikacja, która automatycznie nagrywa strumień MP3 (np. *Chant Grégorien* z Radio Esperance), zapisuje nagrania na serwerze, rotuje stare pliki i udostępnia panel WWW do pobierania nagrań oraz przeglądania logów.
+Ten dokument opisuje krok po kroku, jak skonfigurować i uruchomić aplikację **Radio Recorder** na darmowym hostingu **Serv00.com**.
 
-Projekt działa w Dockerze i jest zoptymalizowany pod darmowy VPS Oracle Cloud Free Tier.
+---
 
-## 🧱 Struktura projektu
+## 🛠️ 1. Wstępna konfiguracja w Panelu Serv00
 
-radio-recorder/  
-│  
-├── worker/  
-│   ├── app.py  
-│   ├── requirements.txt  
-│   ├── .env  
-│   └── Dockerfile  
-│  
-├── web/  
-│   ├── server.py  
-│   ├── requirements.txt  
-│   ├── templates/  
-│   │   └── index.html  
-│   └── Dockerfile  
-│  
-├── nginx/  
-│   ├── default.conf  
-│   └── Dockerfile  
-│  
-└── docker-compose.yml  
+Przed zalogowaniem się na SSH wykonaj poniższe czynności w panelu zarządzania Serv00 (`panelX.serv00.com`):
 
-## ⚙️ Instalacja na Oracle Cloud VPS
+1. **Włączenie procesów w tle:**
+   * Przejdź do: **Additional services** $\rightarrow$ **Run background processes**.
+   * Zmień status na **Enabled** (zapobiegnie to zabijaniu aplikacji po wylogowaniu z SSH).
 
-### 1. Połącz się z serwerem
+2. **Rezerwacja portu TCP:**
+   * Przejdź do: **Toolbox** $\rightarrow$ **Port reservation**.
+   * Wygeneruj nowy port TCP (zapisz go, np. `12345`). Alternatywnie w konsoli SSH:
+     ```bash
+     devil port add tcp
+     ```
 
-ssh ubuntu@PUBLICZNY_ADRES_VPS
+3. **Konfiguracja strony WWW (Reverse Proxy):**
+   * Przejdź do: **WWW websites** $\rightarrow$ **Add new website**.
+   * **Domain:** Podaj swoją domenę/subdomenę w Serv00 (np. `twojanazwa.serv00.net`).
+   * **Website type:** Wybierz **Proxy**.
+   * **Proxy redirect:** Wpisz `http://127.0.0.1:TWOJ_PORT` (zamień `TWOJ_PORT` na wygenerowany port, np. `http://127.0.0.1:12345`).
 
-### 2. Zainstaluj Docker + Compose
+---
 
-sudo apt update  
-sudo apt install -y docker.io docker-compose  
-sudo systemctl enable docker  
-sudo systemctl start docker  
+## 📂 2. Pobranie i przygotowanie kodu (SSH)
 
-### 3. Wgraj projekt
+Zaloguj się na serwer przez SSH (`ssh login@panelX.serv00.com`):
 
-git clone https://github.com/kamil600/radio-recorder.git  
-cd radio-recorder  
+```bash
+# 1. Pobierz repozytorium
+git clone https://github.com/kamil600/radio-recorder.git
+cd radio-recorder
 
-### 4. Uruchom kontenery
+# 2. (Opcjonalnie) Usuń zbędne pliki Dockerowe
+rm -rf docker-compose.yml nginx/ web/Dockerfile worker/Dockerfile
 
-sudo docker-compose up -d  
+# 3. Utwórz folder na nagrania (jeśli nie istnieje)
+mkdir -p recordings
+```
 
-docker ps  
+---
 
-## 🎧 Worker – nagrywanie radia
+## 📦 3. Instalacja zależności
 
-Worker nagrywa strumień MP3 bez transkodowania (`-c copy`), dzięki czemu:
+Skonfiguruj wspólne środowisko wirtualne Pythona dla panelu WWW (`web`) oraz Workera (`worker`):
 
-- nie obciąża CPU,
-- nie traci jakości,
-- działa stabilnie.
+```bash
+# Utworzenie i aktywacja środowiska wirtualnego
+python3 -m venv venv
+source venv/bin/activate
 
-### Konfiguracja w `worker/.env`:
+# Aktualizacja pip oraz instalacja pakietów z obu części projektu + Gunicorn
+pip install --upgrade pip
+pip install -r web/requirements.txt -r worker/requirements.txt gunicorn
+```
 
-STREAM_URL=https://radio-esperance.stream/chant-gregorien.mp3  
-RECORD_SECONDS=3600  
-OUTPUT_DIR=./recordings  
-RECORD_TIME=06:00  
-KEEP_DAYS=7  
-MAX_RETRIES=3
+> **Uwaga:** Upewnij się, że narzędzie `ffmpeg` jest dostępne w systemie, uruchamiając komendę `ffmpeg -version`. Na Serv00 jest ono zainstalowane domyślnie.
 
-## 🌐 Panel WWW
+---
 
-Panel działa na porcie 80 (przez Nginx):
+## ⚙️ 4. Konfiguracja zmiennych środowiskowych
 
-http://PUBLICZNY_ADRES_VPS
+Upewnij się, że plik konfiguracji workera `worker/.env` zawiera prawidłowe ścieżki i ustawienia:
 
-Funkcje:
+```bash
+# Utwórz plik .env jeśli nie istnieje
+cp worker/.env.example worker/.env 2>/dev/null || touch worker/.env
+```
 
-- lista nagrań,
-- pobieranie plików,
-- podgląd logów.
+Edytuj plik `worker/.env` (np. za pomocą `nano worker/.env`) i dostosuj ścieżki zapisu nagrań, aby wskazywały na względny katalog lub pełną ścieżkę na Twoim koncie:
+```env
+RECORDINGS_DIR=./recordings
+```
 
-## 🧩 docker-compose.yml
+---
 
-Uruchamia trzy serwisy:
+## 🚀 5. Uruchomienie aplikacji w tle (PM2)
 
-- `worker` – nagrywanie,
-- `web` – panel WWW,
-- `nginx` – reverse proxy.
+Do zarządzania procesami i zapewnienia ich ciągłego działania w tle użyjemy **PM2**.
 
-Współdzielone wolumeny:
+### Krok A: Instalacja PM2
+```bash
+npm install -g pm2
+```
 
-- `recordings`
-- `logs`
+### Krok B: Uruchomienie usług
 
-## 🔐 Firewall w Oracle Cloud
+1. **Uruchomienie panelu Web (Flask + Gunicorn):**
+   *(Zamień `12345` na swój zarezerwowany port TCP)*
+   ```bash
+   pm2 start "venv/bin/gunicorn -b 127.0.0.1:12345 web.server:app" --name radio-web
+   ```
 
-Networking → VCN → Security Lists → Ingress Rules
+2. **Uruchomienie Workera nagrywającego:**
+   ```bash
+   pm2 start worker/app.py --name radio-worker --interpreter ./venv/bin/python
+   ```
 
-Porty:
+3. **Zapisanie stanu procesów PM2:**
+   ```bash
+   pm2 save
+   ```
 
-- 80/TCP – Panel WWW  
-- 8000/TCP – test bez nginx
+---
 
-## 🔁 Restartowanie i logi
+## 🔄 6. Automatyczny restart po restarcie serwera (Cron)
 
-Restart kontenerów:  
+Serv00 może okazyjnie restartować swoje węzły. Aby aplikacje wstawały automatycznie po restarcie:
 
-sudo docker-compose restart  
+1. Otwórz edytor tabeli Cron:
+   ```bash
+   crontab -e
+   ```
+2. Dodaj na końcu poniższą linijkę (zamień `TWOJ_USER` na swój login na Serv00):
+   ```cron
+   @reboot /home/TWOJ_USER/.npm-global/bin/pm2 resurrect
+   ```
 
-Logi worker:  
+---
 
-docker logs -f radio_recorder_worker  
+## 📊 Przydatne komendy PM2
 
-Logi panelu:
-
-docker logs -f radio_recorder_web
-
-## 🎉 Podsumowanie
-
-Projekt:
-
-- działa 24/7 na darmowym VPS Oracle,
-- nagrywa strumień MP3 bez transkodowania,
-- ma panel WWW,
-- działa w Dockerze,
-- restartuje się automatycznie,
-- jest łatwy do rozwijania.
+* **Sprawdzenie statusu aplikacji:** `pm2 status`
+* **Podgląd logów na żywo:** `pm2 logs`
+* **Podgląd logów konkretnej usługi:** `pm2 logs radio-web` lub `pm2 logs radio-worker`
+* **Restart aplikacji:** `pm2 restart all`
+* **Zatrzymanie aplikacji:** `pm2 stop all`
