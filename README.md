@@ -64,7 +64,7 @@ Worker nagrywa strumień MP3 bez transkodowania (`-c copy`), dzięki czemu:
 STREAM_URL=https://radio-esperance.stream/chant-gregorien.mp3  
 RECORD_SECONDS=3600  
 OUTPUT_DIR=./recordings  
-RECORD_TIME=08:00  
+RECORD_TIME=06:00  
 KEEP_DAYS=7  
 MAX_RETRIES=3
 
@@ -110,11 +110,11 @@ sudo docker-compose restart
 
 Logi worker:  
 
-docker logs -f radio_worker  
+docker logs -f radio_recorder_worker  
 
 Logi panelu:
 
-docker logs -f radio_web
+docker logs -f radio_recorder_web
 
 ## 🎉 Podsumowanie
 
