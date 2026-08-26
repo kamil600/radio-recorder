@@ -35,12 +35,6 @@ Zaloguj się na serwer przez SSH (`ssh login@panelX.serv00.com`):
 # 1. Pobierz repozytorium
 git clone https://github.com/kamil600/radio-recorder.git
 cd radio-recorder
-
-# 2. (Opcjonalnie) Usuń zbędne pliki Dockerowe
-rm -rf docker-compose.yml nginx/ web/Dockerfile worker/Dockerfile
-
-# 3. Utwórz folder na nagrania (jeśli nie istnieje)
-mkdir -p recordings
 ```
 
 ---
