@@ -6,26 +6,26 @@ Projekt działa w Dockerze i jest zoptymalizowany pod darmowy VPS Oracle Cloud F
 
 ## 🧱 Struktura projektu
 
-radio-recorder/
-│
-├── worker/
-│   ├── app.py
-│   ├── requirements.txt
-│   ├── .env
-│   └── Dockerfile
-│
-├── web/
-│   ├── server.py
-│   ├── requirements.txt
-│   ├── templates/
-│   │   └── index.html
-│   └── Dockerfile
-│
-├── nginx/
-│   ├── default.conf
-│   └── Dockerfile
-│
-└── docker-compose.yml
+radio-recorder/  
+│  
+├── worker/  
+│   ├── app.py  
+│   ├── requirements.txt  
+│   ├── .env  
+│   └── Dockerfile  
+│  
+├── web/  
+│   ├── server.py  
+│   ├── requirements.txt  
+│   ├── templates/  
+│   │   └── index.html  
+│   └── Dockerfile  
+│  
+├── nginx/  
+│   ├── default.conf  
+│   └── Dockerfile  
+│  
+└── docker-compose.yml  
 
 ## ⚙️ Instalacja na Oracle Cloud VPS
 
@@ -35,21 +35,21 @@ ssh ubuntu@PUBLICZNY_ADRES_VPS
 
 ### 2. Zainstaluj Docker + Compose
 
-sudo apt update
-sudo apt install -y docker.io docker-compose
-sudo systemctl enable docker
-sudo systemctl start docker
+sudo apt update  
+sudo apt install -y docker.io docker-compose  
+sudo systemctl enable docker  
+sudo systemctl start docker  
 
 ### 3. Wgraj projekt
 
-git clone https://github.com/USER/radio-recorder.git
-cd radio-recorder
+git clone https://github.com/USER/radio-recorder.git  
+cd radio-recorder  
 
 ### 4. Uruchom kontenery
 
-sudo docker-compose up -d
+sudo docker-compose up -d  
 
-docker ps
+docker ps  
 
 ## 🎧 Worker – nagrywanie radia
 
@@ -104,13 +104,13 @@ Porty:
 
 ## 🔁 Restartowanie i logi
 
-Restart kontenerów:
+Restart kontenerów:  
 
-sudo docker-compose restart
+sudo docker-compose restart  
 
-Logi worker:
+Logi worker:  
 
-docker logs -f radio_worker
+docker logs -f radio_worker  
 
 Logi panelu:
 
